@@ -1,24 +1,23 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Wire.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_SSD1306.h> // need to install library inside arduino ide
 //#include <U8g2lib.h>
-#include <ArduinoJson.h>
-#include <Adafruit_GFX.h>
-#include <HX711.h>
+#include <ArduinoJson.h>  // need to install library inside arduino ide
+#include <Adafruit_GFX.h>  // need to install library inside arduino ide
+#include <HX711.h>  // need to install library inside arduino ide
 //#include <MFRC522.h>
-#include <SPI.h>
+#include <SPI.h> // need to install library inside arduino ide
 
 // Wi-Fi Configuration
-const char* ssid = "insertssid";
-const char* password = "insertpw";
+const char* ssid = "your own ssid";
+const char* password = "your own password";
 
 // API settings
-const char* serverName = "http://insert-spoolman-IP-and-Port/api/v1";
+const char* serverName = "http://ipadres:8000/api/v1";  //like "http://192.168.1.60:8000/api/v1" your spoolman server
 unsigned long updateInterval = 60000;
 unsigned long lastUpdateTime = 0;
 String jsonCache;
-
 // OLED settings
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -74,12 +73,12 @@ void setup() {
   }
   display.setRotation(2); //rotates text on OLED 1=90 degrees, 2=180 degrees
   display.display();
-  delay(2000);
+  delay(1000);
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.print("Hello OLED");
+  display.print("Spoolman ESP");
   display.display();
-  delay(2000);
+  delay(1000);
 
   // Initialize HX711
   Serial.println(F("Scale begin"));
@@ -188,7 +187,7 @@ void loop() {
     if (currentStateCLK != lastStateCLK && currentStateCLK == 1) {
       if (digitalRead(ROTARY_DT) != currentStateCLK) {
         selected = (selected + 1) % menuSize;
-        if (selected >= firstItemIndex + 6) {
+        if (selected >= firstItemIndex + 1) {
           firstItemIndex++;  // Increase first item index for scrolling down
         }
       } else {
@@ -229,29 +228,55 @@ void loop() {
 }
 
 void displayMenu(DynamicJsonDocument& doc, String menu, int selected) {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  int y = 0;
-  int index = firstItemIndex;  // Start from first item index
-  for (int i = 0; i < 6; i++) {  // Only display 6 items at most
-    if (index >= doc.size()) break;  // Break if reached the end
-    JsonObject menuItem = doc[index].as<JsonObject>();
-    if (index == selected) {
-      display.fillRect(0, y * 10, SCREEN_WIDTH, 10, SSD1306_WHITE);
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-    } else {
-      display.setTextColor(SSD1306_WHITE);
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+
+    int y = 0;  // Vertical position
+    int index = firstItemIndex;  // Start from the first item index
+
+    for (int i = 0; i < 1; i++) {  // Only display 1 items at most
+        if (index >= doc.size()) break;  // Break if reached the end
+
+        JsonObject menuItem = doc[index].as<JsonObject>();
+            
+        // Display item ID
+        display.setCursor(0, y * 10);
+        display.print(menuItem["id"].as<String>());
+
+        // Display item name
+        display.setCursor(20, y * 10);
+        display.print(menuItem["filament"]["name"].as<String>());
+        y++;
+        display.setCursor(50, y * 10);  
+        display.print(menuItem["filament"]["vendor"]["name"].as<String>());               
+        y++;  
+        display.setCursor(20, y * 10);  
+        display.print(menuItem["filament"]["material"].as<String>());
+        display.setCursor(70, y * 10); 
+        display.print ("o ");
+        display.print(menuItem["filament"]["diameter"].as<String>());
+        y++;  
+        display.setCursor(20, y * 10);  
+        display.print("density : "); 
+        display.print(menuItem["filament"]["density"].as<String>());
+        y++; 
+        display.setCursor(20, y * 10);  // Adjust cursor for the weight
+        display.print(" F : "); 
+        display.print(menuItem["filament"]["spool"]["vendor"]["remaining_weight"].as<String>());
+        display.print(" g");  
+        y++;  
+        display.setCursor(20, y * 10);  
+        display.print(" R : "); 
+        display.print(menuItem["filament"]["vendor"]["empty_spool_weight"].as<String>());
+        display.print(" g");  
+        y++;         
+  
+        index++;  // Move to the next item in the document
     }
-    display.setCursor(0, y * 10);
-    display.print(menuItem["id"].as<String>());
-    display.setCursor(20, y * 10);
-    display.print(menuItem["filament"]["name"].as<String>());
-    
-    y++;
-    index++;
-  }
-  display.display();
+  
+    // Render the display
+    display.display();
 }
 
 void performAction(String name, String vendor, int id) {
