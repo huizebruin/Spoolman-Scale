@@ -258,16 +258,18 @@ void displayMenu(DynamicJsonDocument& doc, String menu, int selected) {
         display.print(menuItem["filament"]["diameter"].as<String>());
         y++;  
         display.setCursor(20, y * 10);  
-        display.print("density : "); 
+        display.print("Density   : "); 
         display.print(menuItem["filament"]["density"].as<String>());
         y++; 
+        float remainingWeight = menuItem["remaining_weight"].as<float>();
+        String formattedWeight = String(remainingWeight, 2);  // Format to 2 decimal places
         display.setCursor(20, y * 10);  // Adjust cursor for the weight
-        display.print(" F : "); 
-        display.print(menuItem["filament"]["spool"]["vendor"]["remaining_weight"].as<String>());
-        display.print(" g");  
+        display.print("F : "); 
+        display.print(formattedWeight);  // Print formatted weight
+        display.print(" g"); 
         y++;  
         display.setCursor(20, y * 10);  
-        display.print(" R : "); 
+        display.print("R : "); 
         display.print(menuItem["filament"]["vendor"]["empty_spool_weight"].as<String>());
         display.print(" g");  
         y++;         
